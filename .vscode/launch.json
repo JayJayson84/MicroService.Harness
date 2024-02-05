@@ -1,0 +1,51 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Security-Consumer",
+            "type": "docker",
+            "request": "attach",
+            "platform": "netCore",
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            },
+            "netCore": {
+                "debuggerPath": "/remote_debugger/vsdbg"
+            },
+            "logging": {
+                "moduleLoad": false
+            },
+            "containerName": "microservice.security.consumer-debug",
+            "preLaunchTask": "compose-up-security-consumer-dev",
+            "postDebugTask": "compose-stop-security-consumer-dev"
+        },
+        {
+            "name": "Security-Producer",
+            "type": "docker",
+            "request": "attach",
+            "platform": "netCore",
+            "sourceFileMap": {
+                "/src": "${workspaceFolder}"
+            },
+            "netCore": {
+                "debuggerPath": "/remote_debugger/vsdbg"
+            },
+            "logging": {
+                "moduleLoad": false
+            },
+            "containerName": "microservice.security.producer-debug",
+            "preLaunchTask": "compose-up-security-producer-dev",
+            "postDebugTask": "compose-stop-security-producer-dev"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Security-All",
+            "configurations": [
+                "Security-Consumer",
+                "Security-Producer"
+            ],
+            "stopAll": true
+        }
+    ]
+}

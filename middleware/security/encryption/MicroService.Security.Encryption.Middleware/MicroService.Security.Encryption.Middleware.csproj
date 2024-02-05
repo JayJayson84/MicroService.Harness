@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'!='Docker' AND '$(PackageSource)'!='Nuget'">
+    <ProjectReference Include="..\..\..\..\common\logging\MicroService.Logging.Extensions\MicroService.Logging.Extensions.csproj" />
+    <ProjectReference Include="..\..\..\..\contracts\MicroService.Security.Encryption.Contracts\MicroService.Security.Encryption.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\modules\security\encryption\MicroService.Security.Encryption\MicroService.Security.Encryption.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'=='Docker'">
+    <ProjectReference Include="..\MicroService.Logging.Extensions\MicroService.Logging.Extensions.csproj" />
+    <ProjectReference Include="..\MicroService.Security.Encryption.Contracts\MicroService.Security.Encryption.Contracts.csproj" />
+    <ProjectReference Include="..\MicroService.Security.Encryption\MicroService.Security.Encryption.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'=='Nuget'">
+    <!-- Nuget Package Sources -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Microservice.Security.Encryption.Middleware.Tests" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+</Project>

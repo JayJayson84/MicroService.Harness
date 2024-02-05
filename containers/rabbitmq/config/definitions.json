@@ -1,0 +1,59 @@
+{
+    "rabbit_version": "3.11.16",
+    "users": [
+        {
+            "name": "admin",
+            "password_hash": "4MxckEQtF/Nm8FViUB4ygamDw7Zw5IfDZ2xLgKLmtIj6YjXt",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": [
+                "administrator"
+            ]
+        },
+        {
+            "name": "broker",
+            "password_hash": "iDc8WfHyQOTC3WH8Amm3SIDrCkjiSb6VZu386Zv5mxsIcj0s",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": [
+                "administrator"
+            ]
+        }
+    ],
+    "vhosts": [
+        {
+            "name": "/"
+        },
+        {
+            "name": "broker"
+        }
+    ],
+    "permissions": [
+        {
+            "user": "admin",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "admin",
+            "vhost": "broker",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        },
+        {
+            "user": "broker",
+            "vhost": "broker",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
+    ],
+    "topic_permissions": [],
+    "parameters": [],
+    "global_parameters": [],
+    "policies": [],
+    "queues": [],
+    "exchanges": [],
+    "bindings": []
+}

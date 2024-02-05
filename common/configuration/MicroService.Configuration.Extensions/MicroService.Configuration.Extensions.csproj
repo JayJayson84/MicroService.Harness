@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.10.4" />
+    <PackageReference Include="MassTransit" Version="8.1.3" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MicroService.Configuration.Abstractions\MicroService.Configuration.Abstractions.csproj" />
+  </ItemGroup>
+
+</Project>

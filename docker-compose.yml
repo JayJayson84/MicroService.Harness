@@ -1,0 +1,145 @@
+version: "3.8"
+
+# All Services
+# ===========================================================
+# Build+Start:  docker-compose up -d --build
+# Rebuild:      docker-compose build --no-cache
+# Build:        docker-compose build
+# Start:        docker-compose up -d
+# Stop:         docker-compose stop
+# Stop+Remove:  docker-compose down
+# ===========================================================
+# Cleanup
+# ===========================================================
+# 1.  Stop/Remove all containers and associated volumes:
+#     docker stop $(docker ps -a -q)
+#     docker rm -v $(docker ps -a -q)
+# 2.  Remove all images:
+#     docker rmi $(docker images -a -q)
+# 3.  Remove all volumes:
+#     docker volume rm $(docker volume ls -q)
+# 4.  Remove all networks:
+#     docker network rm $(docker network ls -q)
+# 5.  Remove unused volumes:
+#     docker volume prune
+# 6.  Remove unused networks:
+#     docker network prune
+# 7.  Remove unused Images, Containers, Volumes and Networks:
+#     docker prune
+# ===========================================================
+
+volumes:
+  rabbit:
+    name: rabbitmq
+  vsdbg:
+    name: vsdbg
+
+networks:
+  microservice.net:
+    driver: bridge
+    name: microservice.net
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+
+services:
+
+  # RabbitMQ
+  # ================================================================================
+  # Build+Start:  docker-compose up -d --build rabbitmq
+  # Rebuild:      docker-compose build rabbitmq --no-cache
+  # Build:        docker-compose build rabbitmq
+  # Start:        docker-compose up -d rabbitmq
+  # Stop:         docker-compose stop rabbitmq
+  # Export:       docker save -o C:\Docker\rabbit-mq.tar microservice.rabbitmq:debug
+  # ================================================================================
+  rabbitmq:
+    image: microservice.rabbitmq:debug
+    container_name: microservice.rabbitmq-debug
+    build:
+      context: ./containers/rabbitmq
+      dockerfile: Dockerfile
+    networks:
+      microservice.net:
+        ipv4_address: 172.20.0.2
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbit:/var/lib/rabbitmq
+
+  # Security Consumer
+  # =================================================================================================
+  # Build+Start:  docker-compose up -d --build microservice.security.consumer
+  # Rebuild:      docker-compose build microservice.security.consumer --no-cache
+  # Build:        docker-compose build microservice.security.consumer
+  # Start:        docker-compose up -d microservice.security.consumer
+  # Stop:         docker-compose stop microservice.security.consumer
+  # Export:       docker save -o C:\Docker\security-consumer.tar microservice.security.consumer:debug
+  # =================================================================================================
+  microservice.security.consumer:
+    image: microservice.security.consumer:debug
+    container_name: microservice.security.consumer-debug
+    env_file:
+      - ./.env
+    build:
+      dockerfile: dockerfile.microservice-security-consumer
+      network: host
+      args:
+        BUILD_CONFIG: ${BUILD_CONFIG}
+        PACKAGE_CONFIG: ${PACKAGE_CONFIG}
+    depends_on:
+      - rabbitmq
+    networks:
+      microservice.net:
+        ipv4_address: 172.20.0.4
+    volumes:
+      - vsdbg:/remote_debugger:ro
+
+  # Security Producer
+  # =================================================================================================
+  # Build+Start:  docker-compose up -d --build microservice.security.producer
+  # Rebuild:      docker-compose build microservice.security.producer --no-cache
+  # Build:        docker-compose build microservice.security.producer
+  # Start:        docker-compose up -d microservice.security.producer
+  # Stop:         docker-compose stop microservice.security.producer
+  # Export:       docker save -o C:\Docker\security-producer.tar microservice.security.producer:debug
+  # =================================================================================================
+  microservice.security.producer:
+    image: microservice.security.producer:debug
+    container_name: microservice.security.producer-debug
+    env_file:
+      - ./.env
+    build:
+      dockerfile: dockerfile.microservice-security-producer
+      network: host
+      args:
+        ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+        BUILD_CONFIG: ${BUILD_CONFIG}
+        PACKAGE_CONFIG: ${PACKAGE_CONFIG}
+        SSL_CERT_NAME: ${SSL_CERT_NAME}
+        SSL_CERT_KEY: ${SSL_CERT_KEY}
+    networks:
+      microservice.net:
+        ipv4_address: 172.20.0.6
+    ports:
+      - "5000:5000" # Swagger|API (http)
+      - "5001:5001" # Swagger|API (https)
+    volumes:
+      - vsdbg:/remote_debugger:ro
+
+  # VS Debugger
+  # =========================================
+  # Install:  docker-compose up install.vsdbg
+  # =========================================
+  install.vsdbg:
+    image: alpine:latest
+    container_name: microservice.vsdbg
+    volumes:
+      - vsdbg:/vsdbg:rw
+    command: >-
+      /bin/sh -c "wget https://aka.ms/getvsdbgsh -O - 2>/dev/null | /bin/sh /dev/stdin -v latest -r linux-x64 -l /vsdbg && chmod 777 /vsdbg/vsdbg"
+    network_mode: host
+    profiles:
+      - "setup"

@@ -1,0 +1,51 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-jammy AS base
+ARG ASPNETCORE_URLS
+ARG SSL_CERT_NAME
+ARG SSL_CERT_KEY
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
+ARG BUILD_CONFIG
+ARG PACKAGE_CONFIG
+WORKDIR /src
+COPY ["common/configuration/MicroService.Configuration.Abstractions/MicroService.Configuration.Abstractions.csproj", "common/configuration/MicroService.Configuration.Abstractions/"]
+COPY ["common/configuration/MicroService.Configuration.Extensions/MicroService.Configuration.Extensions.csproj", "common/configuration/MicroService.Configuration.Extensions/"]
+COPY ["common/configuration/MicroService.Configuration.WebApi/MicroService.Configuration.WebApi.csproj", "common/configuration/MicroService.Configuration.WebApi/"]
+COPY ["common/components/MicroService.Components.AspNetCore/MicroService.Components.AspNetCore.csproj", "common/components/MicroService.Components.AspNetCore/"]
+COPY ["common/logging/MicroService.Logging.Abstractions/MicroService.Logging.Abstractions.csproj", "common/logging/MicroService.Logging.Abstractions/"]
+COPY ["common/logging/MicroService.Logging.Extensions/MicroService.Logging.Extensions.csproj", "common/logging/MicroService.Logging.Extensions/"]
+COPY ["common/logging/MicroService.Logging.Logger/MicroService.Logging.Logger.csproj", "common/logging/MicroService.Logging.Logger/"]
+COPY ["common/logging/MicroService.Logging.NLog/MicroService.Logging.NLog.csproj", "common/logging/MicroService.Logging.NLog/"]
+COPY ["contracts/MicroService.Security.Encryption.Contracts/MicroService.Security.Encryption.Contracts.csproj", "contracts/MicroService.Security.Encryption.Contracts/"]
+COPY ["producers/security/MicroService.Security.Producers/MicroService.Security.Producers.csproj", "producers/security/MicroService.Security.Producers/"]
+COPY ["modules/security/encryption/MicroService.Security.Encryption.Extensions/MicroService.Security.Encryption.Extensions.csproj", "modules/security/encryption/MicroService.Security.Encryption.Extensions/"]
+RUN dotnet restore "producers/security/MicroService.Security.Producers/MicroService.Security.Producers.csproj" /p:PackageSource=${PACKAGE_CONFIG}
+COPY common/configuration/MicroService.Configuration.Abstractions/. common/configuration/MicroService.Configuration.Abstractions/
+COPY common/configuration/MicroService.Configuration.Extensions/. common/configuration/MicroService.Configuration.Extensions/
+COPY common/configuration/MicroService.Configuration.WebApi/. common/configuration/MicroService.Configuration.WebApi/
+COPY common/components/MicroService.Components.AspNetCore/. common/components/MicroService.Components.AspNetCore
+COPY common/logging/. common/logging
+COPY contracts/MicroService.Security.Encryption.Contracts/. contracts/MicroService.Security.Encryption.Contracts
+COPY producers/security/MicroService.Security.Producers/. producers/security/MicroService.Security.Producers
+COPY modules/security/encryption/MicroService.Security.Encryption.Extensions/. modules/security/encryption/MicroService.Security.Encryption.Extensions
+WORKDIR /src/producers/security/MicroService.Security.Producers
+RUN dotnet build "MicroService.Security.Producers.csproj" -c ${BUILD_CONFIG} -o /app/build /p:PackageSource=${PACKAGE_CONFIG};UseAppHost=false
+
+FROM build AS publish
+WORKDIR /src/producers/security/MicroService.Security.Producers
+RUN dotnet publish "MicroService.Security.Producers.csproj" -c ${BUILD_CONFIG} -o /app/publish /p:PackageSource=${PACKAGE_CONFIG}
+
+FROM base as ssl
+RUN apt-get install -y openssl
+RUN mkdir -p /app/cert
+RUN if [ "$(echo "$ASPNETCORE_URLS" | grep -c "https://+:5001")" -gt 0 ]; then \
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /app/cert/key.pem -out /app/cert/cert.pem -subj "/C=UK/ST=Greater London/L=London/O=Microservice/CN=localhost" && \
+        openssl pkcs12 -export -out /app/cert/${SSL_CERT_NAME} -inkey /app/cert/key.pem -in /app/cert/cert.pem -password pass:${SSL_CERT_KEY} && \
+        rm /app/cert/*.pem; \
+    fi
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+COPY --from=ssl /app/cert ./cert
+ENTRYPOINT ["dotnet", "MicroService.Security.Producers.dll"]
