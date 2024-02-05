@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);SYSLIB1045</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="8.1.3" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'!='Docker' AND '$(PackageSource)'!='Nuget'">
+    <ProjectReference Include="..\..\..\common\logging\MicroService.Logging.Extensions\MicroService.Logging.Extensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'=='Docker'">
+    <ProjectReference Include="..\MicroService.Logging.Extensions\MicroService.Logging.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>

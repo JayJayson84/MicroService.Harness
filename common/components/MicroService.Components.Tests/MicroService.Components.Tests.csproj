@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'!='Docker' AND '$(PackageSource)'!='Nuget'">
+    <ProjectReference Include="..\..\..\contracts\MicroService.Security.Encryption.Contracts\MicroService.Security.Encryption.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PackageSource)'=='Docker'">
+    <ProjectReference Include="..\MicroService.Security.Encryption.Contracts\MicroService.Security.Encryption.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

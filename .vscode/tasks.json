@@ -1,0 +1,55 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "compose-up-security-consumer-dev",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "docker-compose -f docker-compose.yml up -d --build microservice.security.consumer",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "shell",
+            "label": "compose-stop-security-consumer-dev",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "docker-compose -f docker-compose.yml stop microservice.security.consumer",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "type": "shell",
+            "label": "compose-up-security-producer-dev",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "docker-compose -f docker-compose.yml up -d --build microservice.security.producer",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "type": "shell",
+            "label": "compose-stop-security-producer-dev",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "docker-compose -f docker-compose.yml stop microservice.security.producer",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        }
+    ]
+}

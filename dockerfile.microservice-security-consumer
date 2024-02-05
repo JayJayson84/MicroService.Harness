@@ -1,0 +1,41 @@
+FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS build
+ARG BUILD_CONFIG
+ARG PACKAGE_CONFIG
+WORKDIR /src
+COPY ["common/configuration/MicroService.Configuration.Abstractions/MicroService.Configuration.Abstractions.csproj", "common/configuration/MicroService.Configuration.Abstractions/"]
+COPY ["common/configuration/MicroService.Configuration.Consumer/MicroService.Configuration.Consumer.csproj", "common/configuration/MicroService.Configuration.Consumer/"]
+COPY ["common/configuration/MicroService.Configuration.Extensions/MicroService.Configuration.Extensions.csproj", "common/configuration/MicroService.Configuration.Extensions/"]
+COPY ["common/logging/MicroService.Logging.Abstractions/MicroService.Logging.Abstractions.csproj", "common/logging/MicroService.Logging.Abstractions/"]
+COPY ["common/logging/MicroService.Logging.Extensions/MicroService.Logging.Extensions.csproj", "common/logging/MicroService.Logging.Extensions/"]
+COPY ["common/logging/MicroService.Logging.Logger/MicroService.Logging.Logger.csproj", "common/logging/MicroService.Logging.Logger/"]
+COPY ["common/logging/MicroService.Logging.NLog/MicroService.Logging.NLog.csproj", "common/logging/MicroService.Logging.NLog/"]
+COPY ["contracts/MicroService.Security.Encryption.Contracts/MicroService.Security.Encryption.Contracts.csproj", "contracts/MicroService.Security.Encryption.Contracts/"]
+COPY ["consumers/security/MicroService.Security.Consumers/MicroService.Security.Consumers.csproj", "consumers/security/MicroService.Security.Consumers/"]
+COPY ["modules/security/encryption/MicroService.Security.Encryption/MicroService.Security.Encryption.csproj", "modules/security/encryption/MicroService.Security.Encryption/"]
+COPY ["modules/security/encryption/MicroService.Security.Encryption.Abstractions/MicroService.Security.Encryption.Abstractions.csproj", "modules/security/encryption/MicroService.Security.Encryption.Abstractions/"]
+COPY ["modules/security/encryption/MicroService.Security.Encryption.Extensions/MicroService.Security.Encryption.Extensions.csproj", "modules/security/encryption/MicroService.Security.Encryption.Extensions/"]
+RUN dotnet restore "consumers/security/MicroService.Security.Consumers/MicroService.Security.Consumers.csproj" /p:PackageSource=${PACKAGE_CONFIG}
+COPY common/configuration/MicroService.Configuration.Abstractions/. common/configuration/MicroService.Configuration.Abstractions/
+COPY common/configuration/MicroService.Configuration.Consumer/. common/configuration/MicroService.Configuration.Consumer/
+COPY common/configuration/MicroService.Configuration.Extensions/. common/configuration/MicroService.Configuration.Extensions/
+COPY common/logging/. common/logging
+COPY contracts/MicroService.Security.Encryption.Contracts/. contracts/MicroService.Security.Encryption.Contracts
+COPY consumers/security/MicroService.Security.Consumers/. consumers/security/MicroService.Security.Consumers
+COPY middleware/security/encryption/MicroService.Security.Encryption.Middleware/. middleware/security/encryption/MicroService.Security.Encryption.Middleware
+COPY modules/security/encryption/MicroService.Security.Encryption/. modules/security/encryption/MicroService.Security.Encryption
+COPY modules/security/encryption/MicroService.Security.Encryption.Abstractions/. modules/security/encryption/MicroService.Security.Encryption.Abstractions
+COPY modules/security/encryption/MicroService.Security.Encryption.Extensions/. modules/security/encryption/MicroService.Security.Encryption.Extensions
+WORKDIR /src/consumers/security/MicroService.Security.Consumers
+RUN dotnet build "MicroService.Security.Consumers.csproj" -c ${BUILD_CONFIG} -o /app/build /p:PackageSource=${PACKAGE_CONFIG};UseAppHost=false
+
+FROM build AS publish
+WORKDIR /src/consumers/security/MicroService.Security.Consumers
+RUN dotnet publish "MicroService.Security.Consumers.csproj" -c ${BUILD_CONFIG} -o /app/publish /p:PackageSource=${PACKAGE_CONFIG}
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "MicroService.Security.Consumers.dll"]
